@@ -1,0 +1,3 @@
+# zcash-artifacts
+
+Hello friend
