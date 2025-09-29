@@ -1,13 +1,15 @@
 mod error;
 pub mod git;
+mod registry;
 mod zcashd;
 
 pub use error::{ArtifactError, Result};
 
 use std::path::{Path, PathBuf};
 
+use crate::registry::Registry;
 #[cfg(feature = "local-build")]
-use crate::git::GitPolicy;
+use crate::{git::GitPolicy, registry::ServiceId};
 
 #[derive(Debug, Clone)]
 pub enum ServiceKind {
@@ -54,6 +56,7 @@ pub enum ArtifactSource {
     },
     #[cfg(feature = "local-build")]
     Build {
+        service: ServiceId,
         repo: PathBuf,
 
         /// Any of <tag>, <branch>, or <commit>. Defaults to <HEAD>.
@@ -80,7 +83,7 @@ pub enum ArtifactSource {
 }
 
 /// Configuration for zcash-artifacts
-pub struct Config {
+pub struct ResolverConfig {
     /// Where to store downloaded artifacts.
     ///
     /// Defaults to ~/.cache/zcash-artifacts/<artifact-kind>/<version-or-rev>/<os>-<arch>
@@ -101,13 +104,24 @@ pub struct BuildConfig {
 }
 
 /// Minimal provider surface the consumer uses.
-pub struct Provider {
-    cfg: Config,
+pub struct ArtifactResolver {
+    config: ResolverConfig,
+    registry: Option<Registry>,
 }
 
-impl Provider {
-    pub fn new(cfg: Config) -> Self {
-        Self { cfg }
+impl ArtifactResolver {
+    pub fn new(cfg: ResolverConfig) -> Self {
+        Self {
+            config: cfg,
+            registry: None,
+        }
+    }
+
+    pub fn with_registry(cfg: ResolverConfig, registry: Registry) -> Self {
+        Self {
+            config: cfg,
+            registry: Some(registry),
+        }
     }
 
     pub fn resolve(&self, src: &ArtifactSource) -> crate::error::Result<ResolvedArtifact> {
@@ -116,11 +130,13 @@ impl Provider {
             ArtifactSource::Release { kind, version } => todo!(),
             #[cfg(feature = "local-build")]
             ArtifactSource::Build {
+                service,
                 repo,
                 refspec,
                 policy,
                 expected_output,
             } => self.resolve_local_build(
+                service,
                 repo,
                 refspec.as_deref(),
                 *policy,
@@ -153,6 +169,7 @@ impl Provider {
 
     fn resolve_local_build(
         &self,
+        service: &ServiceId,
         repo: &Path,
         refspec: Option<&str>,
         policy: GitPolicy,
@@ -256,4 +273,27 @@ impl Provider {
 
         // Ok(ResolvedArtifact { path: out_bin })
     }
+}
+
+/// How to build from a local repo.
+#[cfg(feature = "local-build")]
+pub trait BuildRecipe: Send + Sync + 'static {
+    /// Run the build and return the repo-relative path to the binary (or absolute path).
+    fn build(
+        &self,
+        repo: &std::path::Path,
+        jobs: usize,
+        log: &std::path::Path,
+    ) -> crate::error::Result<std::path::PathBuf>;
+}
+
+/// How to convert (service, version, platform) to a URL+checksum (post-MVP).
+#[cfg(feature = "http")]
+pub trait ReleaseIndex: Send + Sync + 'static {
+    fn asset_for(&self, version: &str, platform: &str) -> Option<(url::Url, String /* sha256 */)>;
+}
+
+/// How to extract a human-readable version string from a binary.
+pub trait VersionProbe: Send + Sync + 'static {
+    fn probe(&self, exe: &std::path::Path) -> Option<String>;
 }

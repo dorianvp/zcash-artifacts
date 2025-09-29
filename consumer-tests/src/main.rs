@@ -1,14 +1,14 @@
 use std::{path::PathBuf, str::FromStr};
 
 use zcash_artifacts::{
-    ArtifactSource, BuildConfig, Config, Provider, ResolvedArtifact, git::GitPolicy,
+    ArtifactResolver, ArtifactSource, BuildConfig, ResolvedArtifact, ResolverConfig, git::GitPolicy,
 };
 
 fn main() {
     println!("Hello friend");
 
-    let cfg = Config {
-        cache_root: tempfile::tempdir().unwrap().into_path(),
+    let cfg = ResolverConfig {
+        cache_root: tempfile::tempdir().unwrap().keep(),
         build_config: BuildConfig {
             allow_build: true,
             default_jobs: Some(2),
@@ -16,13 +16,14 @@ fn main() {
             default_expected_output: PathBuf::from("src/zcashd"),
         },
     };
-    let provider = Provider::new(cfg);
+    let provider = ArtifactResolver::new(cfg);
 
     let src = ArtifactSource::Build {
         repo: PathBuf::from_str("<path>").unwrap(),
         refspec: None,
         policy: GitPolicy::RequireClean,
         expected_output: None,
+        service: todo!(),
     };
 
     let zcashd_path = match provider.resolve(&src).unwrap() {
