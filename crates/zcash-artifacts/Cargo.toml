@@ -6,6 +6,8 @@ edition = "2024"
 [features]
 http = []
 oci = []
+archive = []
+local-build = []
 
 [dependencies]
 thiserror = "2.0.16"

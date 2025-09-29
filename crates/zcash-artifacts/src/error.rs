@@ -186,3 +186,29 @@ pub enum ArtifactError {
     #[error(transparent)]
     Platform(#[from] PlatformError),
 }
+
+#[cfg(feature = "local-build")]
+#[non_exhaustive]
+#[derive(Debug, thiserror::Error)]
+pub enum BuildError {
+    #[error("missing build tool(s): {missing}")]
+    PreflightMissingTools { missing: String },
+
+    #[error("build disabled at runtime; set ZCASH_ARTIFACTS_ALLOW_BUILD=1")]
+    DisabledRuntime,
+
+    #[error("build feature not enabled at compile time")]
+    DisabledFeature,
+
+    #[error("build script failed with exit code {exit_code}; see log at {log_path}")]
+    ScriptFailed {
+        exit_code: i32,
+        log_path: std::path::PathBuf,
+    },
+
+    #[error("unknown build output; expected binary at {expected}")]
+    MissingOutput { expected: std::path::PathBuf },
+
+    #[error("worktree is dirty; cannot build")]
+    DirtyWorktree { repo: std::path::PathBuf },
+}
