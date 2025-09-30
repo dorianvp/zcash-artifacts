@@ -1,7 +1,8 @@
 use std::{path::PathBuf, str::FromStr};
 
 use zcash_artifacts::{
-    ArtifactResolver, ArtifactSource, BuildConfig, ResolvedArtifact, ResolverConfig, git::GitPolicy,
+    ArtifactResolver, ArtifactSource, BuildConfig, ResolvedArtifact, ResolverConfig,
+    git::GitPolicy, registry::ZCASHD,
 };
 
 fn main() {
@@ -23,7 +24,7 @@ fn main() {
         refspec: None,
         policy: GitPolicy::RequireClean,
         expected_output: None,
-        service: todo!(),
+        service: ZCASHD,
     };
 
     let zcashd_path = match provider.resolve(&src).unwrap() {

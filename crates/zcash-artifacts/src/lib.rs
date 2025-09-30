@@ -1,6 +1,6 @@
 mod error;
 pub mod git;
-mod registry;
+pub mod registry;
 mod zcashd;
 
 pub use error::{ArtifactError, Result};
@@ -167,6 +167,13 @@ impl ArtifactResolver {
         Ok(ResolvedArtifact::Executable { path: path.clone() })
     }
 
+    /// This methods does the following:
+    /// - Preflights git
+    /// - Identifies the tree state of the provided repository.
+    /// - Generates a cache key.
+    /// - If cache misses, builds.
+    ///     - TODO: EXPAND
+    /// - Returns the executable path.
     fn resolve_local_build(
         &self,
         service: &ServiceId,
