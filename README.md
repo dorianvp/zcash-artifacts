@@ -27,4 +27,19 @@ The resolver then:
 
 Subsequent resolves for the same key are **cache hits** and do **not** run the build.
 
+### Binary digest
+
+We do **not** include the binary’s checksum in the cache key, because keys
+must be derivable *before* any build runs. Instead, after producing
+`out/zcashd`, we compute a content digest (using BLAKE3) and
+store it in `meta/META.json` along with size/mtime.
+
+Uses:
+- audit/provenance in CI logs,
+- optional cache verification on read (`Config::verify_cache`),
+- quick detection of local corruption or manual tampering.
+
+The cache key remains `service | commit [+ worktree_hash] | platform | v<schema>`, 
+which is stable from inputs and avoids unnecessary rebuilds.
+
 See [cache.rs](./crates/zcash-artifacts/src/cache.rs) for more details.
