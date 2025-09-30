@@ -12,12 +12,6 @@ use crate::registry::Registry;
 use crate::{git::GitPolicy, registry::ServiceId};
 
 #[derive(Debug, Clone)]
-pub enum ServiceKind {
-    Node(NodeKind),
-    Indexer(IndexerKind),
-}
-
-#[derive(Debug, Clone)]
 pub enum NodeKind {
     Zcashd,
     Zebrad,
@@ -51,7 +45,7 @@ impl ArtifactProvider for DefaultProvider {
 pub enum ArtifactSource {
     LocalPath(PathBuf),
     Release {
-        kind: ServiceKind,
+        service: ServiceId,
         version: String,
     },
     #[cfg(feature = "local-build")]
@@ -127,7 +121,7 @@ impl ArtifactResolver {
     pub fn resolve(&self, src: &ArtifactSource) -> crate::error::Result<ResolvedArtifact> {
         match src {
             ArtifactSource::LocalPath(path_buf) => todo!(),
-            ArtifactSource::Release { kind, version } => todo!(),
+            ArtifactSource::Release { service, version } => todo!(),
             #[cfg(feature = "local-build")]
             ArtifactSource::Build {
                 service,

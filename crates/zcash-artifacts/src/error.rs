@@ -5,7 +5,7 @@
 use std::path::PathBuf;
 use thiserror::Error;
 
-use crate::ServiceKind;
+use crate::registry::ServiceId;
 
 pub type Result<T> = std::result::Result<T, ArtifactError>;
 
@@ -19,10 +19,7 @@ pub enum InputError {
     NotExecutable { path: PathBuf },
 
     #[error("invalid source for {service:?}: {reason}")]
-    InvalidSource {
-        service: ServiceKind,
-        reason: String,
-    },
+    InvalidSource { service: ServiceId, reason: String },
 }
 
 #[non_exhaustive]
@@ -30,14 +27,14 @@ pub enum InputError {
 pub enum LocateError {
     #[error("no asset for {service:?} {version} on {platform}")]
     NoAsset {
-        service: ServiceKind,
+        service: ServiceId,
         version: String,
         platform: String,
     },
 
     #[error("failed to resolve release index for {service:?} {version}: {why}")]
     ReleaseIndex {
-        service: ServiceKind,
+        service: ServiceId,
         version: String,
         why: String,
     },
@@ -161,7 +158,7 @@ pub enum FsError {
 pub enum PlatformError {
     #[error("unsupported platform for {service:?}: {platform}")]
     Unsupported {
-        service: ServiceKind,
+        service: ServiceId,
         platform: String,
     },
 }
